@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚙️ Trabajo mecánico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --panel-bg: rgba(20, 27, 45, 0.8);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --accent-force: #ff4757;
+      --accent-disp: #00d2d3;
+      --accent-dot: #feca57;
+      --accent-parallel: #2ed573;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    /* Split View Layout */
+    .main-layout {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      gap: 20px;
+    }
+
+    .views-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      height: 100%;
+    }
+
+    /* Frame Card Styling */
+    .view-frame {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    }
+
+    .frame-header {
+      padding: 14px 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .frame-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: 0.3px;
+    }
+
+    .frame-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .frame-tag.dynamic {
+      background: rgba(46, 213, 115, 0.15);
+      color: var(--accent-parallel);
+      border: 1px solid rgba(46, 213, 115, 0.3);
+    }
+
+    .frame-tag.static {
+      background: rgba(0, 210, 211, 0.15);
+      color: var(--accent-disp);
+      border: 1px solid rgba(0, 210, 211, 0.3);
+    }
+
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Zoom Control Bar Inside Top Left of Screen */
+    .zoom-controls {
+      position: absolute;
+      top: 60px;
+      left: 36px;
+      z-index: 10;
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn-zoom {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-primary);
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .btn-zoom.reset {
+      width: 38px;
+      font-size: 0.75rem;
+    }
+
+    .btn-zoom:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .zoom-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 40px;
+      text-align: center;
+    }
+
+    /* Right Controls Sidebar */
+    .controls-overlay {
+      width: 360px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+      justify-content: space-between;
+      overflow-y: auto;
+    }
+
+    .controls-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .math-summary {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .math-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+
+    .math-label {
+      color: var(--text-secondary);
+    }
+
+    .math-value {
+      font-weight: 700;
+    }
+
+    .math-value.force {
+      color: var(--accent-force);
+    }
+
+    .math-value.disp {
+      color: var(--accent-disp);
+    }
+
+    .math-value.dot {
+      color: var(--accent-dot);
+      font-size: 1.15rem;
+    }
+
+    .math-value.speed {
+      color: var(--accent-parallel);
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .label-val {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .label-val span.val {
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      height: 6px;
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type=range]:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+
+    input[type=range]#force-slider::-webkit-slider-thumb {
+      background: var(--accent-force);
+      box-shadow: 0 0 10px var(--accent-force);
+    }
+
+    input[type=range]#disp-slider::-webkit-slider-thumb {
+      background: var(--accent-disp);
+      box-shadow: 0 0 10px var(--accent-disp);
+    }
+
+    input[type=range]#angle-slider::-webkit-slider-thumb {
+      background: var(--accent-dot);
+      box-shadow: 0 0 10px var(--accent-dot);
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .presets {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .btn-preset {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .btn-preset:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-preset.active {
+      background: rgba(254, 202, 87, 0.2);
+      border-color: var(--accent-dot);
+      color: var(--accent-dot);
+    }
+
+    /* Pedal Toggle Buttons (3 column layout) */
+    .pedal-toggle-group-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap: 6px;
+    }
+
+    .btn-toggle {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+      padding: 8px 4px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .btn-toggle:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-toggle.active {
+      background: rgba(0, 210, 211, 0.2);
+      border-color: var(--accent-disp);
+      color: var(--accent-disp);
+    }
+
+    /* Lock Force Downward Button */
+    .btn-lock {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-primary);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+
+    .btn-lock:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-lock.active {
+      background: rgba(255, 71, 87, 0.25);
+      border-color: var(--accent-force);
+      color: var(--accent-force);
+      box-shadow: 0 0 12px rgba(255, 71, 87, 0.25);
+    }
+
+    /* System Reset Button */
+    .btn-reset-system {
+      background: rgba(46, 213, 115, 0.15);
+      border: 1px solid rgba(46, 213, 115, 0.3);
+      color: var(--accent-parallel);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+
+    .btn-reset-system:hover {
+      background: rgba(46, 213, 115, 0.25);
+      border-color: var(--accent-parallel);
+      box-shadow: 0 0 12px rgba(46, 213, 115, 0.25);
+    }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* Status Indicator Pill */
+    .status-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--panel-border);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Zoom Control Floating Bar -->
+  <div class="zoom-controls">
+    <button class="btn-zoom" id="zoom-out" title="Disminuir Zoom">−</button>
+    <span class="zoom-text" id="zoom-val">100%</span>
+    <button class="btn-zoom" id="zoom-in" title="Aumentar Zoom">+</button>
+    <button class="btn-zoom reset" id="zoom-reset" title="Restablecer Zoom">1:1</button>
+  </div>
+
+  <div class="main-layout">
+    <!-- Views Grid (Frame 1 & Frame 2) -->
+    <div class="views-grid">
+      <!-- Frame 1: Physical Dynamic Pedal View -->
+      <div class="view-frame">
+        <div class="frame-header">
+          <div class="frame-title">
+            <span>1. Modelo Físico (Eje Conectado 180°)</span>
+          </div>
+          <span class="frame-tag dynamic">Vista Física</span>
+        </div>
+        <div class="canvas-container">
+          <canvas id="canvasDynamic"></canvas>
+        </div>
+      </div>
+
+      <!-- Frame 2: Isolated Static Vector Graph View -->
+      <div class="view-frame">
+        <div class="frame-header">
+          <div class="frame-title">
+            <span>2. Diagrama de Vectores Aislado</span>
+          </div>
+          <span class="frame-tag static">Vista Matemática (0,0)</span>
+        </div>
+        <div class="canvas-container">
+          <canvas id="canvasStatic"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Controls Sidebar -->
+    <div class="controls-overlay">
+      <div class="controls-body">
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-color" style="background: var(--accent-disp)"></div>
+            <span>Desplazamiento (d&#x20D7;)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: var(--accent-force)"></div>
+            <span>Fuerza (F&#x20D7;)</span>
+          </div>
+        </div>
+
+        <!-- System Reset Button -->
+        <div class="control-group">
+          <button class="btn-reset-system" id="btn-reset-system">
+            ↺ Reiniciar en Máxima Eficiencia (3 o'clock)
+          </button>
+        </div>
+
+        <!-- Active Pedal Toggle (3 buttons) -->
+        <div class="control-group">
+          <div class="label-val">
+            <span>Modo de Pedaleo (Aplicación de Fuerza)</span>
+          </div>
+          <div class="pedal-toggle-group-3">
+            <button class="btn-toggle" id="btn-pedal-1">Pedal 1</button>
+            <button class="btn-toggle" id="btn-pedal-2">Pedal 2</button>
+            <button class="btn-toggle active" id="btn-pedal-both">Ambos (2 Pies)</button>
+          </div>
+        </div>
+
+        <!-- Lock Downward Force Button (Active by default) -->
+        <div class="control-group">
+          <button class="btn-lock active" id="btn-lock-down">
+            <span id="lock-icon">⬇</span> <span id="lock-text">Fuerza Bloqueada ⬇ (Pie)</span>
+          </button>
+        </div>
+
+        <div class="control-group">
+          <div class="label-val">
+            <span>Magnitud de Fuerza |F|</span>
+            <span class="val" id="force-val">20 N</span>
+          </div>
+          <input type="range" id="force-slider" min="0" max="100" value="20" step="1">
+        </div>
+
+        <div class="control-group">
+          <div class="label-val">
+            <span>Desplazamiento d&#x20D7;</span>
+            <span class="val" id="disp-val">0.20 m (20 cm)</span>
+          </div>
+          <input type="range" id="disp-slider" min="-0.20" max="0.20" value="0.20" step="0.01">
+        </div>
+
+        <div class="control-group">
+          <div class="label-val">
+            <span>Ángulo entre vectores (&theta;)</span>
+            <span class="val" id="angle-val">0°</span>
+          </div>
+          <input type="range" id="angle-slider" min="-180" max="180" value="0" step="1" disabled>
+        </div>
+
+        <div class="presets" id="presets-group">
+          <button class="btn-preset active" id="btn-0">0° (Max W)</button>
+          <button class="btn-preset" id="btn-90">90° (W = 0)</button>
+          <button class="btn-preset" id="btn-180">180° (-W)</button>
+        </div>
+
+        <div class="status-pill" id="status-pill">
+          <div class="status-dot" id="status-dot" style="background: var(--accent-parallel);"></div>
+          <span id="status-text">Movimiento Activo</span>
+        </div>
+      </div>
+
+      <!-- Bottom Math Summary -->
+      <div class="math-summary">
+        <div class="math-row">
+          <span class="math-label">F&#x20D7; &middot; d&#x20D7; = |F| &middot; |d| &middot; cos(&theta;)</span>
+        </div>
+        <div class="math-row">
+          <span class="math-label">Trabajo (W):</span>
+          <span class="math-value dot" id="work-val">16.0 J</span>
+        </div>
+        <div class="math-row">
+          <span class="math-label">Velocidad Angular (&omega;):</span>
+          <span class="math-value speed" id="speed-val">2.50 rad/s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvasDynamic = document.getElementById('canvasDynamic');
+    const ctxDynamic = canvasDynamic.getContext('2d');
+
+    const canvasStatic = document.getElementById('canvasStatic');
+    const ctxStatic = canvasStatic.getContext('2d');
+
+    // UI Controls
+    const forceSlider = document.getElementById('force-slider');
+    const dispSlider = document.getElementById('disp-slider');
+    const angleSlider = document.getElementById('angle-slider');
+
+    const forceVal = document.getElementById('force-val');
+    const dispVal = document.getElementById('disp-val');
+    const angleVal = document.getElementById('angle-val');
+    const workVal = document.getElementById('work-val');
+    const speedVal = document.getElementById('speed-val');
+
+    const statusPill = document.getElementById('status-pill');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+
+    const btn0 = document.getElementById('btn-0');
+    const btn90 = document.getElementById('btn-90');
+    const btn180 = document.getElementById('btn-180');
+    const presetsGroup = document.getElementById('presets-group');
+
+    // Pedal, Lock & Reset UI Controls
+    const btnPedal1 = document.getElementById('btn-pedal-1');
+    const btnPedal2 = document.getElementById('btn-pedal-2');
+    const btnPedalBoth = document.getElementById('btn-pedal-both');
+    const btnLockDown = document.getElementById('btn-lock-down');
+    const btnResetSystem = document.getElementById('btn-reset-system');
+    const lockText = document.getElementById('lock-text');
+
+    // Zoom UI Controls
+    const zoomInBtn = document.getElementById('zoom-in');
+    const zoomOutBtn = document.getElementById('zoom-out');
+    const zoomResetBtn = document.getElementById('zoom-reset');
+    const zoomValText = document.getElementById('zoom-val');
+
+    // State variables
+    let F_mag = parseFloat(forceSlider.value); // Newtons (20 N default)
+    let d_mag = parseFloat(dispSlider.value);  // meters (0.8 m default)
+    let thetaDeg = parseFloat(angleSlider.value); // degrees
+
+    let activePedalMode = 'both'; // '1', '2', or 'both'
+    let lockForceDown = true; // Purely downward foot force mode preselected by default
+
+    let crankAngle = 0; // Dynamic rotating angle (0 = Horizontal 3 o'clock, MAX EFFICIENCY!)
+    let crankRadius = 130; // Pixels in canvas
+    let currentOmega = 0.8; // Initial launch angular velocity rad/s (3x slower)
+    let zoomLevel = 1.0; // Zoom factor
+
+    function resizeCanvases() {
+      if (canvasDynamic && canvasDynamic.parentElement) {
+        canvasDynamic.width = canvasDynamic.parentElement.clientWidth;
+        canvasDynamic.height = canvasDynamic.parentElement.clientHeight;
+      }
+      if (canvasStatic && canvasStatic.parentElement) {
+        canvasStatic.width = canvasStatic.parentElement.clientWidth;
+        canvasStatic.height = canvasStatic.parentElement.clientHeight;
+      }
+    }
+    window.addEventListener('resize', resizeCanvases);
+    resizeCanvases();
+
+    // Mouse & Touch Drag Interaction State for Frame 1
+    let isDraggingPedal = false;
+    let dragStartAngle = 0;
+    let lastDragTime = 0;
+    let lastDragAngle = 0;
+
+    function getCanvasCoords(e) {
+      const rect = canvasDynamic.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const rawX = clientX - rect.left;
+      const rawY = clientY - rect.top;
+
+      const centerX = canvasDynamic.width / 2;
+      const centerY = canvasDynamic.height / 2;
+
+      // Adjust for zoom scaling
+      const mouseX = (rawX - centerX) / zoomLevel + centerX;
+      const mouseY = (rawY - centerY) / zoomLevel + centerY;
+
+      return { mouseX, mouseY, centerX, centerY };
+    }
+
+    function handlePointerDown(e) {
+      const { mouseX, mouseY, centerX, centerY } = getCanvasCoords(e);
+      const distToCenter = Math.hypot(mouseX - centerX, mouseY - centerY);
+
+      // Allow dragging if user clicks anywhere near the crank orbit radius (130px +- 50px)
+      if (Math.abs(distToCenter - crankRadius) < 55 || distToCenter < crankRadius + 40) {
+        isDraggingPedal = true;
+        const currentMouseAngle = Math.atan2(mouseY - centerY, mouseX - centerX);
+        dragStartAngle = currentMouseAngle - crankAngle;
+        lastDragAngle = currentMouseAngle;
+        lastDragTime = performance.now();
+        canvasDynamic.style.cursor = 'grabbing';
+        if (e.cancelable) e.preventDefault();
+      }
+    }
+
+    function handlePointerMove(e) {
+      const { mouseX, mouseY, centerX, centerY } = getCanvasCoords(e);
+      const distToCenter = Math.hypot(mouseX - centerX, mouseY - centerY);
+
+      if (isDraggingPedal) {
+        const now = performance.now();
+        const currentMouseAngle = Math.atan2(mouseY - centerY, mouseX - centerX);
+        const dt = Math.max(0.008, (now - lastDragTime) / 1000);
+
+        const newCrankAngle = currentMouseAngle - dragStartAngle;
+
+        let dAngle = currentMouseAngle - lastDragAngle;
+        dAngle = Math.atan2(Math.sin(dAngle), Math.cos(dAngle));
+
+        currentOmega = dAngle / dt; // Velocity inherited from mouse drag
+
+        crankAngle = newCrankAngle;
+        lastDragAngle = currentMouseAngle;
+        lastDragTime = now;
+
+        canvasDynamic.style.cursor = 'grabbing';
+        if (e.cancelable) e.preventDefault();
+      } else {
+        if (Math.abs(distToCenter - crankRadius) < 45) {
+          canvasDynamic.style.cursor = 'grab';
+        } else {
+          canvasDynamic.style.cursor = 'default';
+        }
+      }
+    }
+
+    function handlePointerUp() {
+      if (isDraggingPedal) {
+        isDraggingPedal = false;
+        canvasDynamic.style.cursor = 'grab';
+      }
+    }
+
+    canvasDynamic.addEventListener('mousedown', handlePointerDown);
+    canvasDynamic.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+
+    canvasDynamic.addEventListener('touchstart', handlePointerDown, { passive: false });
+    canvasDynamic.addEventListener('touchmove', handlePointerMove, { passive: false });
+    window.addEventListener('touchend', handlePointerUp);
+
+    // Reset System Position & Speed to Max Efficiency
+    function resetSystemToMaxEfficiency() {
+      crankAngle = 0; // 3 o'clock position (horizontal right)
+      currentOmega = 0.8; // rad/s (3x slower)
+      d_mag = 0.20;
+      dispSlider.value = 0.20;
+      updateValues();
+      if (!lockForceDown) {
+        setAnglePreset(0);
+      }
+    }
+    btnResetSystem.addEventListener('click', resetSystemToMaxEfficiency);
+
+    // Pedal Selector logic
+    function setPedalMode(mode) {
+      activePedalMode = mode;
+      btnPedal1.classList.toggle('active', mode === '1');
+      btnPedal2.classList.toggle('active', mode === '2');
+      btnPedalBoth.classList.toggle('active', mode === 'both');
+    }
+
+    btnPedal1.addEventListener('click', () => setPedalMode('1'));
+    btnPedal2.addEventListener('click', () => setPedalMode('2'));
+    btnPedalBoth.addEventListener('click', () => setPedalMode('both'));
+
+    // Lock Downward Force logic
+    btnLockDown.addEventListener('click', () => {
+      lockForceDown = !lockForceDown;
+      btnLockDown.classList.toggle('active', lockForceDown);
+      angleSlider.disabled = lockForceDown;
+      if (lockForceDown) {
+        lockText.textContent = "Fuerza Bloqueada ⬇ (Pie)";
+      } else {
+        lockText.textContent = "Bloquear Fuerza Hacia Abajo (Pie)";
+        updatePresetButtons();
+      }
+    });
+
+    // Zoom logic
+    function updateZoom(newZoom) {
+      zoomLevel = Math.max(0.4, Math.min(2.5, newZoom));
+      zoomValText.textContent = `${Math.round(zoomLevel * 100)}%`;
+    }
+
+    zoomInBtn.addEventListener('click', () => updateZoom(zoomLevel + 0.15));
+    zoomOutBtn.addEventListener('click', () => updateZoom(zoomLevel - 0.15));
+    zoomResetBtn.addEventListener('click', () => updateZoom(1.0));
+
+    // Presets logic
+    function setAnglePreset(deg) {
+      if (lockForceDown) return;
+      angleSlider.value = deg;
+      thetaDeg = deg;
+      updateValues();
+      updatePresetButtons();
+    }
+
+    btn0.addEventListener('click', () => setAnglePreset(0));
+    btn90.addEventListener('click', () => setAnglePreset(90));
+    btn180.addEventListener('click', () => setAnglePreset(180));
+
+    function updatePresetButtons() {
+      btn0.classList.toggle('active', thetaDeg === 0);
+      btn90.classList.toggle('active', Math.abs(thetaDeg) === 90);
+      btn180.classList.toggle('active', Math.abs(thetaDeg) === 180);
+    }
+
+    forceSlider.addEventListener('input', (e) => {
+      F_mag = parseFloat(e.target.value);
+      updateValues();
+    });
+
+    dispSlider.addEventListener('input', (e) => {
+      d_mag = parseFloat(e.target.value);
+      updateValues();
+    });
+
+    angleSlider.addEventListener('input', (e) => {
+      if (!lockForceDown) {
+        thetaDeg = parseFloat(e.target.value);
+        updateValues();
+        updatePresetButtons();
+      }
+    });
+
+    function updateValues() {
+      forceVal.textContent = `${F_mag.toFixed(0)} N`;
+      dispVal.textContent = `${d_mag.toFixed(2)} m (${Math.round(d_mag * 100)} cm)`;
+      angleVal.textContent = `${thetaDeg.toFixed(0)}°`;
+    }
+
+    // Arrow drawing helper
+    function drawArrow(ctx, fromX, fromY, toX, toY, color, width = 3, label = '', dash = false) {
+      const headlen = 12; // length of head in pixels
+      const dx = toX - fromX;
+      const dy = toY - fromY;
+      const angle = Math.atan2(dy, dx);
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = width;
+      if (dash) {
+        ctx.setLineDash([4, 4]);
+      }
+
+      // Line
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(toX, toY);
+      ctx.stroke();
+
+      // Arrow head
+      if (!dash) {
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+        ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Label
+      if (label) {
+        ctx.font = 'bold 14px "JetBrains Mono", monospace';
+        ctx.fillText(label, toX + Math.cos(angle) * 15, toY + Math.sin(angle) * 15);
+      }
+
+      ctx.restore();
+    }
+
+    // Smooth force opacity variables (0.15s fade duration)
+    let forceAlpha1 = 1.0;
+    let forceAlpha2 = 0.0;
+
+    // Helper to calculate pedal specific angle and theta for any pedal
+    function getPedalParams(pAngle) {
+      const baseTangent = pAngle + Math.PI / 2;
+      const dispDirAngle = d_mag >= 0 ? baseTangent : (baseTangent + Math.PI);
+
+      let curThetaDeg = thetaDeg;
+      if (lockForceDown) {
+        const downAngle = Math.PI / 2; // Canvas downward
+        curThetaDeg = forceDirAngleToTheta(downAngle, dispDirAngle);
+      }
+
+      const curThetaRad = (curThetaDeg * Math.PI) / 180;
+      const cosT = Math.cos(curThetaRad);
+      const absD = Math.abs(d_mag);
+
+      let pWork = F_mag * absD * cosT;
+      let isForceActive = true;
+
+      // In real pedaling with downward foot force, the rising pedal unweights/disconnects force
+      if (lockForceDown) {
+        if (cosT <= 0 || pWork <= 0) {
+          pWork = 0;
+          isForceActive = false; // Disconnect force on ascending stroke!
+        }
+      }
+
+      return {
+        dispDirAngle,
+        thetaRad: curThetaRad,
+        thetaDeg: curThetaDeg,
+        cosTheta: cosT,
+        work: pWork,
+        isForceActive: isForceActive
+      };
+    }
+
+    // 1. DYNAMIC SCENE DRAWING (Dual Connected Pedals at 180° Offset)
+    function drawDynamicScene(ctx, width, height, baseCrankAngle) {
+      ctx.clearRect(0, 0, width, height);
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.scale(zoomLevel, zoomLevel);
+      ctx.translate(-centerX, -centerY);
+
+      // Circular Orbit
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, crankRadius, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 6]);
+      ctx.stroke();
+      ctx.restore();
+
+      // Hub
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 26, 0, Math.PI * 2);
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 4;
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // Both pedals are offset by 180° (Math.PI)
+      const p1Angle = baseCrankAngle;
+      const p2Angle = baseCrankAngle + Math.PI;
+
+      const pedalsToDraw = [
+        { id: 1, angle: p1Angle, isActive: (activePedalMode === '1' || activePedalMode === 'both'), forceAlpha: forceAlpha1 },
+        { id: 2, angle: p2Angle, isActive: (activePedalMode === '2' || activePedalMode === 'both'), forceAlpha: forceAlpha2 }
+      ];
+
+      // Draw inactive pedal first, then active pedal
+      pedalsToDraw.sort((a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? 1 : -1));
+
+      pedalsToDraw.forEach(p => {
+        ctx.save();
+        if (!p.isActive) {
+          ctx.globalAlpha = 0.35; // Low opacity for back pedal
+        }
+
+        const pedalX = centerX + crankRadius * Math.cos(p.angle);
+        const pedalY = centerY + crankRadius * Math.sin(p.angle);
+
+        // Crank Arm
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(pedalX, pedalY);
+        ctx.strokeStyle = p.isActive ? '#94a3b8' : '#64748b';
+        ctx.lineWidth = 14;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(pedalX, pedalY);
+        ctx.strokeStyle = p.isActive ? '#cbd5e1' : '#94a3b8';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.restore();
+
+        // Pedal Body
+        ctx.save();
+        ctx.translate(pedalX, pedalY);
+        ctx.fillStyle = p.isActive ? '#334155' : '#1e293b';
+        ctx.strokeStyle = p.isActive ? '#64748b' : '#475569';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(-24, -8, 48, 16, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#f8fafc';
+        ctx.fill();
+        ctx.restore();
+
+        // DRAW VECTORS ON ACTIVE PEDALS
+        if (p.isActive) {
+          const params = getPedalParams(p.angle);
+          const absDispMag = Math.abs(d_mag);
+
+          const dispPixelLen = 400 * absDispMag;
+          const dEndX = pedalX + Math.cos(params.dispDirAngle) * dispPixelLen;
+          const dEndY = pedalY + Math.sin(params.dispDirAngle) * dispPixelLen;
+
+          // Always draw displacement vector d on active pedal
+          if (absDispMag > 0.005) {
+            drawArrow(ctx, pedalX, pedalY, dEndX, dEndY, '#00d2d3', 3.5, `d${activePedalMode === 'both' ? p.id : ''}`);
+          }
+
+          // DRAW FORCE VECTOR F WITH SMOOTH 0.05s FADE OPACITY
+          if (F_mag > 0 && p.forceAlpha > 0.01) {
+            const forceDirAngle = params.dispDirAngle + params.thetaRad;
+            const forceScale = 1.8 * F_mag;
+            const fEndX = pedalX + Math.cos(forceDirAngle) * forceScale;
+            const fEndY = pedalY + Math.sin(forceDirAngle) * forceScale;
+
+            const F_parallel_mag = F_mag * params.cosTheta;
+            const fParallelEndX = pedalX + Math.cos(params.dispDirAngle) * (1.8 * F_parallel_mag);
+            const fParallelEndY = pedalY + Math.sin(params.dispDirAngle) * (1.8 * F_parallel_mag);
+
+            ctx.save();
+            ctx.globalAlpha *= p.forceAlpha; // Apply smooth 0.05s force fade
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(fEndX, fEndY);
+            ctx.lineTo(fParallelEndX, fParallelEndY);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            ctx.stroke();
+            ctx.restore();
+
+            if (absDispMag > 0.005) {
+              ctx.save();
+              ctx.beginPath();
+              const arcRadius = 35;
+              ctx.arc(pedalX, pedalY, arcRadius, params.dispDirAngle, forceDirAngle, params.thetaRad < 0);
+              ctx.strokeStyle = '#feca57';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+
+              const midAngle = params.dispDirAngle + params.thetaRad / 2;
+              const labelX = pedalX + Math.cos(midAngle) * (arcRadius + 16);
+              const labelY = pedalY + Math.sin(midAngle) * (arcRadius + 16);
+              ctx.font = 'bold 13px "JetBrains Mono", monospace';
+              ctx.fillStyle = '#feca57';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(`θ = ${Math.round(params.thetaDeg)}°`, labelX, labelY);
+              ctx.restore();
+            }
+
+            drawArrow(ctx, pedalX, pedalY, fEndX, fEndY, '#ff4757', 3.5, `F${activePedalMode === 'both' ? p.id : ''}`);
+
+            if (Math.abs(F_parallel_mag) > 1 && absDispMag > 0.005) {
+              const parallelColor = F_parallel_mag > 0 ? '#2ed573' : '#ff9f43';
+              drawArrow(ctx, pedalX, pedalY, fParallelEndX, fParallelEndY, parallelColor, 2, '', true);
+            }
+
+            ctx.restore();
+          }
+        }
+
+        ctx.restore();
+      });
+
+      ctx.restore();
+    }
+
+    // 2. ISOLATED ABSTRACT VECTOR GRAPH (Centered at Origin (0,0))
+    function drawStaticVectorDiagram(ctx, width, height, p1Params, p2Params) {
+      ctx.clearRect(0, 0, width, height);
+
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.scale(zoomLevel, zoomLevel);
+      ctx.translate(-centerX, -centerY);
+
+      // Cartesian Coordinate Axes (X and Y)
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 1.5;
+
+      drawArrow(ctx, centerX - 180, centerY, centerX + 180, centerY, 'rgba(255, 255, 255, 0.25)', 1.5, 'X', false);
+      drawArrow(ctx, centerX, centerY + 180, centerX, centerY - 180, 'rgba(255, 255, 255, 0.25)', 1.5, 'Y', false);
+
+      ctx.font = '12px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.fillText('(0,0)', centerX - 25, centerY + 18);
+      ctx.restore();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fill();
+      ctx.restore();
+
+      const absDispMag = Math.abs(d_mag);
+      const dispPixelLen = 450 * absDispMag;
+
+      const pedalsToDraw = [
+        { id: 1, params: p1Params, alpha: forceAlpha1, isActive: (activePedalMode === '1' || activePedalMode === 'both') },
+        { id: 2, params: p2Params, alpha: forceAlpha2, isActive: (activePedalMode === '2' || activePedalMode === 'both') }
+      ];
+
+      pedalsToDraw.forEach(p => {
+        if (!p.isActive || !p.params) return;
+
+        const dispAngle = p.params.dispDirAngle;
+        const dEndX = centerX + Math.cos(dispAngle) * dispPixelLen;
+        const dEndY = centerY + Math.sin(dispAngle) * dispPixelLen;
+
+        if (absDispMag > 0.005) {
+          drawArrow(ctx, centerX, centerY, dEndX, dEndY, '#00d2d3', 4, `d${activePedalMode === 'both' ? p.id : ''}`);
+        }
+
+        if (F_mag > 0 && p.alpha > 0.01) {
+          const forceDirAngle = dispAngle + p.params.thetaRad;
+          const forceScale = 2.0 * F_mag;
+          const fEndX = centerX + Math.cos(forceDirAngle) * forceScale;
+          const fEndY = centerY + Math.sin(forceDirAngle) * forceScale;
+
+          const F_parallel_mag = F_mag * p.params.cosTheta;
+          const fParallelEndX = centerX + Math.cos(dispAngle) * (2.0 * F_parallel_mag);
+          const fParallelEndY = centerY + Math.sin(dispAngle) * (2.0 * F_parallel_mag);
+
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(fEndX, fEndY);
+          ctx.lineTo(fParallelEndX, fParallelEndY);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 4]);
+          ctx.stroke();
+          ctx.restore();
+
+          if (absDispMag > 0.005) {
+            ctx.save();
+            ctx.beginPath();
+            const arcRadius = 45;
+            ctx.arc(centerX, centerY, arcRadius, dispAngle, forceDirAngle, p.params.thetaRad < 0);
+            ctx.strokeStyle = '#feca57';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            const midAngle = dispAngle + p.params.thetaRad / 2;
+            const labelX = centerX + Math.cos(midAngle) * (arcRadius + 18);
+            const labelY = centerY + Math.sin(midAngle) * (arcRadius + 18);
+            ctx.font = 'bold 14px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#feca57';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`θ${activePedalMode === 'both' ? p.id : ''} = ${Math.round(p.params.thetaDeg)}°`, labelX, labelY);
+            ctx.restore();
+          }
+
+          drawArrow(ctx, centerX, centerY, fEndX, fEndY, '#ff4757', 4, `F${activePedalMode === 'both' ? p.id : ''}`);
+
+          if (Math.abs(F_parallel_mag) > 1 && absDispMag > 0.005) {
+            const parallelColor = F_parallel_mag > 0 ? '#2ed573' : '#ff9f43';
+            drawArrow(ctx, centerX, centerY, fParallelEndX, fParallelEndY, parallelColor, 2.5, '', true);
+          }
+
+          ctx.restore();
+        }
+      });
+
+      ctx.restore();
+    }
+
+    let lastTime = performance.now();
+
+    function animate(currentTime) {
+      const dt = Math.min((currentTime - lastTime) / 1000, 0.1); // seconds
+      lastTime = currentTime;
+
+      // Calculate parameters and Work for active pedals
+      const p1Angle = crankAngle;
+      const p2Angle = crankAngle + Math.PI;
+
+      const p1Params = getPedalParams(p1Angle);
+      const p2Params = getPedalParams(p2Angle);
+
+      // Smooth 0.05s force opacity transitions
+      const fadeRate = dt / 0.05;
+      const targetAlpha1 = p1Params.isForceActive ? 1.0 : 0.0;
+      if (forceAlpha1 < targetAlpha1) {
+        forceAlpha1 = Math.min(targetAlpha1, forceAlpha1 + fadeRate);
+      } else if (forceAlpha1 > targetAlpha1) {
+        forceAlpha1 = Math.max(targetAlpha1, forceAlpha1 - fadeRate);
+      }
+
+      const targetAlpha2 = p2Params.isForceActive ? 1.0 : 0.0;
+      if (forceAlpha2 < targetAlpha2) {
+        forceAlpha2 = Math.min(targetAlpha2, forceAlpha2 + fadeRate);
+      } else if (forceAlpha2 > targetAlpha2) {
+        forceAlpha2 = Math.max(targetAlpha2, forceAlpha2 - fadeRate);
+      }
+
+      let totalWork = 0;
+      if (activePedalMode === '1') {
+        totalWork = p1Params.work;
+        thetaDeg = p1Params.thetaDeg;
+      } else if (activePedalMode === '2') {
+        totalWork = p2Params.work;
+        thetaDeg = p2Params.thetaDeg;
+      } else {
+        // Both pedals active: sum of work from both foot downstrokes
+        totalWork = p1Params.work + p2Params.work;
+        thetaDeg = p1Params.thetaDeg;
+      }
+
+      if (lockForceDown) {
+        angleSlider.value = thetaDeg;
+        updateValues();
+      }
+
+      // Drive Torque on shared crank axle (3x slower velocity)
+      const dispSense = d_mag >= 0 ? 1 : -1;
+      const driveTorque = dispSense * totalWork * 0.1167;
+
+      // Mechanical rotational friction / damping
+      const damping = 0.25;
+
+      if (!isDraggingPedal) {
+        // Rotational acceleration: d(omega)/dt = driveTorque - damping * omega
+        currentOmega += (driveTorque - damping * currentOmega) * dt;
+
+        // Update base pedal rotation angle
+        crankAngle += currentOmega * dt;
+      }
+
+      // Update UI Displays
+      workVal.textContent = `${totalWork.toFixed(1)} J`;
+      speedVal.textContent = `${currentOmega.toFixed(2)} rad/s`;
+
+      if (Math.abs(currentOmega) < 0.02) {
+        statusDot.style.background = '#ff4757';
+        statusText.textContent = Math.abs(totalWork) < 0.1 ? 'Sin Movimiento (F ⊥ d)' : 'Frenando / Quieto';
+      } else {
+        const rpm = Math.abs(currentOmega) * 9.5493;
+        statusDot.style.background = totalWork > 0 ? '#2ed573' : '#ff9f43';
+        statusText.textContent = totalWork > 0 ? `Movimiento (${rpm.toFixed(0)} RPM)` : `Fuerza en Contra (${rpm.toFixed(0)} RPM)`;
+      }
+
+      // 1. Draw Physical Dynamic Dual Connected Pedals (Frame 1)
+      drawDynamicScene(ctxDynamic, canvasDynamic.width, canvasDynamic.height, crankAngle);
+
+      // 2. Draw Isolated Abstract Vector Diagram Centered at Origin (Frame 2)
+      drawStaticVectorDiagram(ctxStatic, canvasStatic.width, canvasStatic.height, p1Params, p2Params);
+
+      requestAnimationFrame(animate);
+    }
+
+    // Convert canvas force direction angle downAngle relative to dispDirAngle into theta degree [-180, 180]
+    function forceDirAngleToTheta(forceCanvasAngle, dispCanvasAngle) {
+      let diff = forceCanvasAngle - dispCanvasAngle;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      return Math.round(diff * 180 / Math.PI);
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+
+</html>
